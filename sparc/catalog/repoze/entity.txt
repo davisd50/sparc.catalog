@@ -1,0 +1,20 @@
+# Indexed catalog for Sparc entity information
+
+>>> from zope.component import createObject
+>>> catalog = createObject('sparc.catalog.repoze.entity_catalog')
+>>> doc_map = createObject('sparc.catalog.repoze.document_map')
+>>> entity = createObject('sparc.entity.entity',
+...                                           id='abc',
+...                                           name=u'Entity name',
+...                                           description=u'Entity description',
+...                                           details=u'Entity details')
+>>> doc_id = doc_map.add(entity.getId())
+>>> catalog.index_doc(doc_id, entity)
+
+>>> from repoze.catalog.query import Eq
+>>> result = catalog.query(Eq('id', 'abc'))
+>>> result[0] == 1 # completely stupid, but they mask an int under a ResultSetSize class
+True
+
+>>> result[1][0] == doc_id
+True

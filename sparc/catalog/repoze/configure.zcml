@@ -1,0 +1,22 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    i18n_domain="sparc.catalog">
+
+    <!--Mark repoze.catalog.document.DocumentMap() objects
+    -->
+    <class class="repoze.catalog.document.DocumentMap">
+      <implements interface=".IDocumentMap" />
+    </class>
+
+    <utility
+    	component=".document.repozeDocumentmapFactory"
+    	name="sparc.catalog.repoze.document_map"
+    	/>
+
+    <utility
+    	component=".entity.entityCatalogFactory"
+    	name="sparc.catalog.repoze.entity_catalog"
+    	/>
+
+</configure>

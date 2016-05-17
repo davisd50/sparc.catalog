@@ -1,0 +1,25 @@
+# Repoze Catalog document map factory
+In order to use the Repoze catalog facilities, we need to be able to generate
+and track integer-based Ids for catalog'd objects.  Since sparc.entity based
+objects have ASCII Ids...we need some facility that will be able to create
+a unique integer id for those objects and track them for later lookup.
+
+The repoze.catalog.document.DocumentMap class will perform this for us.  We'll
+do some basic testing for it here.
+
+>>> from zope.component import createObject
+>>> doc_map = createObject('sparc.catalog.repoze.document_map')
+
+>>> from sparc.catalog.repoze import IDocumentMap
+>>> IDocumentMap.providedBy(doc_map)
+True
+
+Create an entity and add it to the document map
+>>> entity = createObject('sparc.entity.entity', id='abc', name=u'test')
+>>> d_id = doc_map.add(entity.getId())
+
+Do a few tests to make sure we can look it up ok
+>>> doc_map.docid_for_address(entity.getId()) == d_id
+True
+>>> doc_map.address_for_docid(d_id) == entity.getId()
+True
