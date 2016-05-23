@@ -1,0 +1,38 @@
+# Create a sparc.catalog.IDirectoryFieldIndexMap from a repoze catalog
+The sparc.catalog.IDirectoryLookup interface is leveraged by searching 
+against field names.  Field names are different than Repoze catalog index
+names.  For the Repoze catalog implementation, a
+field is a collection of indexes...therefore searching a field will
+search against one or more indexes for matching terms.
+
+Creating the field definitions can be a tedious task, programatically.  Because
+of this, there is a convienence utility available that will automatically
+generate a sparc.catalog.IDirectoryFieldIndexMap from a Repoze catalog.
+
+Effective use of this utility is based on index naming conventions.  See
+sparc.catalog.repoze.interfaces.IFieldMapFromRepozeCatalogindexes for more
+information on the required index naming practices.
+
+First, we need a repoze catalog with appropriately named indexes.  We'll
+use the entity catalog....cause it's easy to get.
+>>> from zope.component import createObject
+>>> catalog = createObject(u"sparc.catalog.repoze.entity_catalog")
+
+Now we can grab the global utility and generate a IDirectoryFieldIndexMap
+>>> from zope.component import getUtility
+>>> from sparc.catalog.repoze import IFieldMapFromRepozeCatalogindexes
+>>> fm_generator = getUtility(IFieldMapFromRepozeCatalogindexes)
+>>> fm = fm_generator(catalog)
+
+Now let's make sure it is valid
+>>> from sparc.catalog import IDirectoryFieldIndexMap
+>>> IDirectoryFieldIndexMap.providedBy(fm)
+True
+>>> set(['id','interfaces','name','description','details']) == set(fm.map.keys())
+True
+>>> fm.map['id']
+set(['id'])
+>>> fm.map['interfaces']
+set(['interfaces'])
+>>> fm.map['name'] == set(['name','name_text'])
+True

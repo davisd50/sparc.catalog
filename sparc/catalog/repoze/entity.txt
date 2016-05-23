@@ -18,3 +18,26 @@ True
 
 >>> result[1][0] == doc_id
 True
+
+make sure text indexes are not case sensitive
+>>> from repoze.catalog.query import Contains
+>>> result = catalog.query(Contains('name_text', 'entity'))
+>>> result[0] == 1
+True
+>>> result = catalog.query(Eq('name_text', 'name')) # wierd behavior...leaving here for others to see
+>>> result[0] == 1
+True
+>>> result = catalog.query(Eq('name_text', 'nam*')) # wildcard searches work for text indexes
+>>> result[0] == 1
+True
+
+field index is case sensitive, however
+>>> result = catalog.query(Eq('name', 'entity name'))
+>>> result[0] == 0
+True
+>>> result = catalog.query(Eq('name', 'Entity name'))
+>>> result[0] == 1
+True
+>>> result = catalog.query(Eq('name', 'Entity nam*')) # no wildcards on non-text indexes
+>>> result[0] == 0
+True

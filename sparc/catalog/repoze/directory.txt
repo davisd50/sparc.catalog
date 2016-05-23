@@ -1,0 +1,200 @@
+# A Sparc directory for a repoze catalog and document map
+
+A directory is meant to be a wrapper around some indexer to allow for easy
+adding and searching.  The directory search interface is very simple, but not
+especially robust.  It should be used when looking for a simple term on 
+objects providing some interface.
+
+The directory is implemented as a an adapter for a ISparcRepozeCatalog and
+a IDirectoryFieldIndexMap.  The first object provides the indexer, the second
+provides a definition of field-to-indexes that help the directory search
+effectively.
+
+To start, we need to get a Repoze Catalog object.  We'll use a factory to
+get a Sparc entity catalog.  This catalog indexes all the sparc.entity.IEntity
+fields, in addition to all an object's provided interfaces.
+>>> from zope.component import createObject
+>>> catalog = createObject('sparc.catalog.repoze.entity_catalog')
+
+We're now in a position to create our ISparcRepozeCatalog object.  We'll use
+a factory to get this object.  We'll instantiate the object with our catalog
+from above.
+>>> scatalog = createObject(u"sparc.catalog.repoze.catalog", catalog=catalog)
+
+We now need to get our IDirectoryFieldIndexMap object.  Since creating these
+kinds of objects from scratch isn't a whole lot of fun, we'll use a global
+utility to create this from our Repoze entity catalog (from above).
+
+>>> from zope.component import getUtility
+>>> from sparc.catalog.repoze import IFieldMapFromRepozeCatalogindexes
+>>> fm_generator = getUtility(IFieldMapFromRepozeCatalogindexes)
+>>> fm = fm_generator(catalog)
+
+take a look at field.txt for more information on how the field map was created.
+but, mostly it creates the map based on index names.
+
+We can now adapt these objects into a IDirectory
+>>> from zope.component import getMultiAdapter
+>>> from sparc.catalog import IDirectory
+>>> directory = getMultiAdapter((scatalog, fm, ), IDirectory)
+
+We'll need a few objects to add/search in the directory
+>>> entity1 = createObject('sparc.entity.entity',
+...                                           id='abc',
+...                                           name=u'Entity name 1',
+...                                           description=u'Entity description 1',
+...                                           details=u'Entity details 1')
+>>> entity2 = createObject('sparc.entity.entity',
+...                                           id='def',
+...                                           name=u'Entity name 2',
+...                                           description=u'Entity description 2',
+...                                           details=u'Entity details 2')
+>>> entity3 = createObject('sparc.entity.entity',
+...                                           id='ghi',
+...                                           name=u'Entity name 3',
+...                                           description=u'Entity description 3',
+...                                           details=u'Entity details 3')
+
+We'll create a special marker interface and mark one of the entities.  We'll
+use this later in the searc filters.
+>>> from zope.interface import Interface, alsoProvides
+>>> class ITestMarker(Interface): pass
+>>> alsoProvides(entity2, ITestMarker)
+
+We're now ready to add/search our entities within the directory.  We can add
+items in the directory in a few different ways...
+
+simple add
+>>> directory.add(entity1)
+
+add like a map
+>>> directory[entity2.getId()] = entity2
+
+but, doing it this way requires we use IIdentified.id as the key
+>>> try:
+...     directory['bad_key'] = entity2
+... except KeyError:
+...     pass
+
+Update...for repoze based catalogs, this is the same as add()
+>>> directory.update(entity3)
+
+We can now search the directory.
+
+We can simply get a known item
+>>> directory[entity1.getId()].id
+'abc'
+
+simple containment
+>>> directory.contains(entity1)
+True
+>>> entity1.getId() in directory
+True
+
+We can iterate the keys and values of the directory
+>>> set(['abc','def','ghi']) == set([i for i in directory])
+True
+>>> sorted([i for i in directory.values()],key=lambda v:v.id)[0].id
+'abc'
+
+The above examples show how to use the directory in the same manor you might
+treat a Python Dict, or set.  But the real purpose of the directory is to 
+allow efficient index-based searching for simple searches.  Search filters are
+mostly based on fields.  In simple cases, a field represents an available
+attribute on the object.  However, a field can represent other searchable
+criteria as well.  In the case of the Repoze catalog directory implementation,
+fields represent one or more indexes that will be searched as configured via
+the IDirectoryFieldIndexMap object that was part of the multi-adapter.
+
+simple term search against all fields
+>>> results = [r for r in directory.search('Entity name 1')]
+>>> len(results)
+1
+>>> results[0].id
+'abc'
+
+You can search a particular field
+>>> results = [r for r in directory.search('Entity name 1', fields=('name',))]
+>>> results[0].id
+'abc'
+
+searching the wrong field name will return 0 results
+>>> results = [r for r in directory.search('abc', fields=('name',))]
+>>> len(results)
+0
+
+You can search multiple field names
+>>> results = [r for r in directory.search('abc', fields=('id', 'name',))]
+>>> len(results)
+1
+>>> results = [r for r in directory.search('Entity name 1', fields=('id', 'name',))]
+>>> len(results)
+1
+
+Partial term matches are dependent on the catalog implementation.  For Repoze
+catalogs, text indexes are case-insensitive and will match on partial hits
+>>> results = [r for r in directory.search('entity name')]
+>>> len(results)
+3
+
+Incorrect terms will not match
+>>> results = [r for r in directory.search('entity nam')]
+>>> len(results)
+0
+
+Wildcards, however, can be used on a text index
+>>> results = [r for r in directory.search('entity nam*')]
+>>> len(results)
+3
+
+Repoze text indexes do not support pre-ceding wildcards
+>>> results = [r for r in directory.search('*ntity name')]
+>>> len(results)
+0
+
+Keyword indexes are case-senstive
+>>> results = [r for r in directory.search('ABC', fields=('id',))]
+>>> len(results)
+0
+
+Wildcards are not usable on keyword indexes
+>>> results = [r for r in directory.search('ab*', fields=('id',))]
+>>> len(results)
+0
+
+
+We can filter results based on provided object interfaces.
+>>> from zope.interface import Interface # matches all objects that provide any interface
+>>> results = [r for r in directory.search('entity name', interfaces=[Interface])]
+>>> len(results)
+3
+>>> results = [r for r in directory.search('entity name', interfaces=[IDirectory])]
+>>> len(results)
+0
+>>> results = [r for r in directory.search('entity name', interfaces=[ITestMarker])]
+>>> len(results)
+1
+
+
+We can also remove items from the directory
+>>> del directory[entity3.getId()]
+>>> results = [r for r in directory.search('entity name')]
+>>> len(results)
+2
+
+Trying to remove a non-existent item issues a KeyError
+>>> try:
+...     directory.remove(entity3)
+... except KeyError:
+...     pass
+
+Discarding a non-existant item is silent
+>>> directory.discard(entity3)
+
+Of course, using these methods to remove valid items work too
+>>> directory.remove(entity2)
+>>> directory.discard(entity1)
+
+>>> results = [r for r in directory.search('entity name')]
+>>> len(results)
+0

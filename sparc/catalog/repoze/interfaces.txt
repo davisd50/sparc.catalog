@@ -1,0 +1,14 @@
+#Markers for repoze.catalog objects
+
+Create catalog and document map objects and verify marker interfaces
+>>> from repoze.catalog.document import DocumentMap
+>>> from sparc.catalog.repoze import IDocumentMap
+>>> doc_map = DocumentMap()
+>>> IDocumentMap.providedBy(doc_map)
+True
+
+>>> from repoze.catalog.catalog import Catalog
+>>> from sparc.catalog.repoze import IRepozeCatalog
+>>> catalog = Catalog()
+>>> IRepozeCatalog.providedBy(catalog)
+True

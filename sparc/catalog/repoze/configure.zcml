@@ -3,11 +3,34 @@
     xmlns:i18n="http://namespaces.zope.org/i18n"
     i18n_domain="sparc.catalog">
 
-    <!--Mark repoze.catalog.document.DocumentMap() objects
+    <!--Markers
     -->
     <class class="repoze.catalog.document.DocumentMap">
       <implements interface=".IDocumentMap" />
     </class>
+    <class class="repoze.catalog.catalog.Catalog">
+      <implements interface=".IRepozeCatalog" />
+    </class>
+    
+    <utility
+    	component=".catalog.identifiedCatalogFactory"
+    	name="sparc.catalog.repoze.repoze_identified_catalog"
+    	/>
+    
+    <utility
+        provides=".interfaces.IFieldMapFromRepozeCatalogindexes"
+    	factory=".field.FieldMapFromRepozeCatalogindexes"
+    	/>
+    
+    <utility
+    	component=".catalog.sparcRepozeCatalogFactory"
+    	name="sparc.catalog.repoze.catalog"
+    	/>
+    
+    <utility
+    	component=".catalog.persistenSparcRepozeCatalogFactory"
+    	name="sparc.catalog.repoze.persistent.catalog"
+    	/>
 
     <utility
     	component=".document.repozeDocumentmapFactory"
@@ -17,6 +40,13 @@
     <utility
     	component=".entity.entityCatalogFactory"
     	name="sparc.catalog.repoze.entity_catalog"
+    	/>
+    
+    <adapter
+    	for="sparc.catalog.repoze.ISparcRepozeCatalog
+    	     sparc.catalog.IDirectoryFieldIndexMap"
+    	provides="sparc.catalog.IDirectory"
+    	factory=".directory.SparcDirectory"
     	/>
 
 </configure>

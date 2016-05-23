@@ -1,0 +1,88 @@
+# Repoze catalogs tools
+In order to index searchable object content, we can leverage the base
+repoze.catalog facilities.  We'll add some additional structure around these
+facilities to help make them more usefull within the Sparc framework.  A
+quick how-to guide can be found here 
+http://docs.repoze.org/catalog/overview.html
+
+As a starting point, we'll create a catalog that indexes 
+sparc.entity.IIdentified.  Esentially, this catalog has two indexes, one for
+the object's id, and the other for the objects provided interfaces.
+
+>>> from zope.component import createObject
+>>> catalog = createObject(u"sparc.catalog.repoze.repoze_identified_catalog")
+
+make sure indexes are available as expeected
+>>> set(['id', 'interfaces']) == set([i for i in catalog])
+True
+
+
+The catalog does not store references to the object....instead it only stores
+references to integer ids.  Since sparc.entity.IIdentified.id can be a string,
+we need a way to map integer ids to these string ids.  We use the Repoze
+catalog document map helper for this (repoze.catalog.document.DocumentMap).
+This facility will generate unique integer ids and map them to our string
+ids (or some other hashable value that our application understands as a 
+refernce to said object).
+
+>>> doc_map = createObject('sparc.catalog.repoze.document_map')
+
+
+We'll create an instance of sparc.catalog.repoze.ISparcRepozeCatalog with these
+two objects.  This new object is a basic structure to make sure the catalog is
+associated with the correct document map.
+
+**note: even though we don't do it here, you could also create a persistent
+        ISparcRepozeCatalog via the "sparc.catalog.repoze.persistent.catalog" 
+        factory utility
+**note: This factory can also be called without any arguments to initiate
+        a standard repoze catalog without any defined indexes.
+
+>>> scatalog = createObject(u"sparc.catalog.repoze.catalog", catalog=catalog)
+
+Let's make sure our data structure has the expected interfaces
+
+We'll now create an entity to be indexed and searched.
+
+>>> entity = createObject('sparc.entity.entity',
+...                                           id='abc',
+...                                           name=u'Entity name',
+...                                           description=u'Entity description',
+...                                           details=u'Entity details')
+
+add entity into catalog
+>>> doc_id = scatalog.doc_map.add(entity.getId())
+>>> scatalog.catalog.index_doc(doc_id, entity)
+
+search and find based on indexes
+>>> from repoze.catalog.query import Eq
+>>> result = scatalog.catalog.query(Eq('id', 'abc'))
+>>> result[1][0] == doc_id
+True
+>>> from sparc.entity import IEntity
+>>> result = scatalog.catalog.query(Eq('interfaces', IEntity.__identifier__))
+>>> result[1][0] == doc_id
+True
+>>> from zope.interface import Interface
+>>> result = scatalog.catalog.query(Eq('interfaces', Interface.__identifier__))
+>>> result[1][0] == doc_id
+True
+>>> from sparc.catalog import IDirectory
+>>> result = scatalog.catalog.query(Eq('interfaces', IDirectory.__identifier__))
+>>> result[0] == 0 # no return results
+True
+
+
+
+
+# Additional tests
+>>> from sparc.catalog.repoze.interfaces import *
+>>> ISparcRepozeCatalog.providedBy(scatalog)
+True
+>>> IDocumentMap.providedBy(scatalog.doc_map)
+True
+>>> IRepozeCatalog.providedBy(scatalog.catalog)
+True
+>>> persistent_scatalog = createObject(u"sparc.catalog.repoze.persistent.catalog")
+>>> ISparcRepozeCatalog.providedBy(persistent_scatalog)
+True

@@ -4,5 +4,10 @@
     i18n_domain="sparc.catalog">
     
     <include package=".repoze" />
+    
+    <utility
+    	component=".field.directoryFieldIndexMapFactory"
+    	name="sparc.catalog.field_map"
+    	/>
 
 </configure>

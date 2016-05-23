@@ -10,10 +10,6 @@ do some basic testing for it here.
 >>> from zope.component import createObject
 >>> doc_map = createObject('sparc.catalog.repoze.document_map')
 
->>> from sparc.catalog.repoze import IDocumentMap
->>> IDocumentMap.providedBy(doc_map)
-True
-
 Create an entity and add it to the document map
 >>> entity = createObject('sparc.entity.entity', id='abc', name=u'test')
 >>> d_id = doc_map.add(entity.getId())
