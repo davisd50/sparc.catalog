@@ -16,8 +16,10 @@ fields, in addition to all an object's provided interfaces.
 >>> from zope.component import createObject
 >>> catalog = createObject('sparc.catalog.repoze.entity_catalog')
 
-We're now in a position to create our ISparcRepozeCatalog object.  We'll use
-a factory to get this object.  We'll instantiate the object with our catalog
+We're now in a position to create our ISparcRepozeCatalog object.  This object
+is needed because, on its own, a Repoze Catalog does not contain a document
+map (see document.txt).  This object contains both the catalog and map. We'll
+use a factory to get this object.  We'll instantiate the object with our catalog
 from above.
 >>> scatalog = createObject(u"sparc.catalog.repoze.catalog", catalog=catalog)
 
@@ -38,7 +40,8 @@ We can now adapt these objects into a IDirectory
 >>> from sparc.catalog import IDirectory
 >>> directory = getMultiAdapter((scatalog, fm, ), IDirectory)
 
-We'll need a few objects to add/search in the directory
+In order to demonstrate the use of the directory, We'll need a few objects to 
+add/search in the directory
 >>> entity1 = createObject('sparc.entity.entity',
 ...                                           id='abc',
 ...                                           name=u'Entity name 1',
@@ -55,11 +58,16 @@ We'll need a few objects to add/search in the directory
 ...                                           description=u'Entity description 3',
 ...                                           details=u'Entity details 3')
 
-We'll create a special marker interface and mark one of the entities.  We'll
-use this later in the searc filters.
+In addition to the entities, We'll create a special marker interface and mark 
+one of the entities.  We'll use this later to demonstrate the search interface
+filter feature of the directory.
 >>> from zope.interface import Interface, alsoProvides
 >>> class ITestMarker(Interface): pass
 >>> alsoProvides(entity2, ITestMarker)
+>>> ITestMarker.providedBy(entity2)
+True
+>>> ITestMarker.providedBy(entity1)
+False
 
 We're now ready to add/search our entities within the directory.  We can add
 items in the directory in a few different ways...
@@ -78,6 +86,12 @@ but, doing it this way requires we use IIdentified.id as the key
 
 Update...for repoze based catalogs, this is the same as add()
 >>> directory.update(entity3)
+
+Items being added into the catalog must provide IIdentified
+>>> try:
+...     directory.add('string_object')
+... except ValueError:
+...     pass
 
 We can now search the directory.
 
