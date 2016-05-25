@@ -4,7 +4,6 @@ from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 from repoze.catalog.interfaces import ICatalog
 from persistent import Persistent
 from repoze.catalog.document import DocumentMap
-from repoze.catalog.catalog import Catalog
 from zope.component.factory import Factory
 from zope.interface import implementer
 from zope.interface import implements

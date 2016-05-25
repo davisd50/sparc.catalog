@@ -1,8 +1,9 @@
 # Indexed catalog for Sparc entity information
 
 >>> from zope.component import createObject
->>> catalog = createObject('sparc.catalog.repoze.entity_catalog')
 >>> doc_map = createObject('sparc.catalog.repoze.document_map')
+>>> catalog = createObject('sparc.catalog.repoze.entity_catalog', 
+... 														doc_map=doc_map)
 >>> entity = createObject('sparc.entity.entity',
 ...                                           id='abc',
 ...                                           name=u'Entity name',
@@ -40,4 +41,61 @@ True
 True
 >>> result = catalog.query(Eq('name', 'Entity nam*')) # no wildcards on non-text indexes
 >>> result[0] == 0
+True
+
+Now we'll test the related entities index.  We'll create some entities, add them
+into some new attributes on our entity from above, then index the base entity.
+
+>>> entity2 = createObject('sparc.entity.entity',
+...                                           id='entity2',
+...                                           name=u'Entity 2 name',
+...                                           description=u'Entity 2 description',
+...                                           details=u'Entity 2 details')
+>>> entity3 = createObject('sparc.entity.entity',
+...                                           id='entity3',
+...                                           name=u'Entity 3 name',
+...                                           description=u'Entity 3 description',
+...                                           details=u'Entity 3 details')
+>>> entity4 = createObject('sparc.entity.entity',
+...                                           id='entity4',
+...                                           name=u'Entity 4 name',
+...                                           description=u'Entity 4 description',
+...                                           details=u'Entity 4 details')
+
+In order to add attributes that will get indexed, they need to be part of a 
+provided Interface.  We'll create that here and apply it to our object.
+>>> from zope.interface import Interface, Attribute, alsoProvides
+>>> class ITest(Interface):
+...     single = Attribute('non iterable attribute')
+...     iterable = Attribute('iterable attribute')
+>>> entity.single = entity2
+>>> entity.iterable = [entity3, entity4]
+>>> alsoProvides(entity, ITest)
+>>> catalog.reindex_doc(doc_id, entity)
+
+We should now be able to search for all of these entities
+>>> result = catalog.query(Eq('id', 'abc'))
+>>> result[0] == 1
+True
+>>> result = catalog.query(Eq('id', 'entity2'))
+>>> result[0] == 1
+True
+>>> result = catalog.query(Eq('id', 'entity3'))
+>>> result[0] == 1
+True
+>>> result = catalog.query(Eq('id', 'entity4'))
+>>> result[0] == 1
+True
+
+We can also see that our new objects have an indexed relationship back to the 
+original entity.
+>>> from repoze.catalog.query import And
+>>> result = catalog.query(And(Eq('id', 'abc'),Eq('entities', entity2.id)))
+>>> result[0] == 1
+True
+>>> result = catalog.query(And(Eq('id', 'abc'),Eq('entities', entity3.id)))
+>>> result[0] == 1
+True
+>>> result = catalog.query(And(Eq('id', 'abc'),Eq('entities', entity4.id)))
+>>> result[0] == 1
 True
