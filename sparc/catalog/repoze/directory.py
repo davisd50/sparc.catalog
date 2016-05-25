@@ -89,10 +89,21 @@ class SparcDirectory(object):
         """Generator of all readable & available keys (IIdentified.id) in directory"""
         for key in self._map:
             yield key
-    def values(self):
-        """Generator of all readable & available IIdentified objects in directory"""
-        for key in self._map:
-            yield self._map[key]
+    def values(self, interfaces=None):
+        """Generator of all readable & available IIdentified objects in directory
+        
+        If interfaces is given, then result is filtered for objects providing
+        the given interfaces.
+        """
+        if not interfaces:
+            for key in self._map:
+                yield self._map[key]
+        else:
+            query = Or(*[Eq('interfaces', iface.__identifier__) for \
+                                                         iface in interfaces])
+            results = self._catalog.query(query)
+            for doc_id in results[1]:
+                yield self._map[self._doc_map.address_for_docid(doc_id)]
     def fields(self):
         """Return list of field names that are indexed and searchable"""
         return [f for f in self._fields.map if f != 'interfaces']

@@ -37,8 +37,12 @@ class IDirectoryLookup(Interface):
         """True if IIdentified is in directory"""
     def __iter__():
         """Generator of all readable & available keys (IIdentified.id) in directory"""
-    def values():
-        """Generator of all readable & available IIdentified objects in directory"""
+    def values(interfaces=None):
+        """Generator of all readable & available IIdentified objects in directory
+        
+        If interfaces is given, then result is filtered for objects providing
+        the given interfaces.
+        """
     def fields():
         """Return list of field names that are indexed and searchable"""
     def search(term, fields=None, interfaces=None):

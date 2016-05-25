@@ -111,6 +111,13 @@ True
 >>> sorted([i for i in directory.values()],key=lambda v:v.id)[0].id
 'abc'
 
+We can filter our values for a list of interfaces if we'd like
+
+>>> sorted([i for i in directory.values(interfaces=[ITestMarker])],
+... 												   key=lambda v:v.id)[0].id
+'def'
+
+
 The above examples show how to use the directory in the same manor you might
 treat a Python Dict, or set.  But the real purpose of the directory is to 
 allow efficient index-based searching for simple searches.  Search filters are
