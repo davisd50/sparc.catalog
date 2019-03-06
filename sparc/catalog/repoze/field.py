@@ -1,9 +1,10 @@
 from zope.component import createObject
-from zope.interface import implements
+from zope import interface
 from interfaces import IFieldMapFromRepozeCatalogindexes
 
+@interface.implementer(IFieldMapFromRepozeCatalogindexes)
 class FieldMapFromRepozeCatalogindexes(object):
-    implements(IFieldMapFromRepozeCatalogindexes)
+    
     def __call__(self, catalog):
         fm = createObject(u"sparc.catalog.field_map")
         for index in catalog:

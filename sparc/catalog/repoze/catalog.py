@@ -6,7 +6,6 @@ from persistent import Persistent
 from repoze.catalog.document import DocumentMap
 from zope.component.factory import Factory
 from zope.interface import implementer
-from zope.interface import implements
 from zope.interface import providedBy
 from zope.schema.fieldproperty import FieldProperty
 from interfaces import ISparcRepozeCatalog
@@ -27,8 +26,9 @@ def identifiedCatalogFactoryHelper():
     return catalog
 identifiedCatalogFactory = Factory(identifiedCatalogFactoryHelper)
 
+@implementer(ISparcRepozeCatalog)
 class SparcRepozeCatalog(object):
-    implements(ISparcRepozeCatalog)
+    
     def __init__(self, doc_map=None, catalog=None):
         self.doc_map = doc_map if doc_map else DocumentMap()
         self.catalog = catalog if catalog else Catalog()
@@ -38,6 +38,7 @@ class SparcRepozeCatalog(object):
     catalog = FieldProperty(ISparcRepozeCatalog['catalog'])
 sparcRepozeCatalogFactory = Factory(SparcRepozeCatalog)
 
+@implementer(ISparcRepozeCatalog)
 class PersistentSparcRepozeCatalog(Persistent, SparcRepozeCatalog):
-    implements(ISparcRepozeCatalog)
+    pass
 persistenSparcRepozeCatalogFactory = Factory(PersistentSparcRepozeCatalog)

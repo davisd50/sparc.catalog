@@ -6,3 +6,10 @@ sparc.catalog
 ++++++++++++++++++
 
 * initial release
+
+1.0.1
+++++++++++++++++++
+
+* update for Py3
+* remove strict dependencies on other sparc packages (i.e. sparc.entity)
+* add capability to index objects adaptable to IIdentified

@@ -2,16 +2,16 @@ from BTrees.OOBTree import OOBTree
 from repoze.catalog.query import And
 from repoze.catalog.query import Or
 from repoze.catalog.query import Eq
-from zope.component import adapts
-from zope.interface import implements
+from zope import interface
+from zope import component
 from sparc.catalog import IDirectory
 from sparc.catalog import IDirectoryFieldIndexMap
-from sparc.entity import IIdentified
+from .. import IIdentified
 from interfaces import ISparcRepozeCatalog
 
+@interface.implementer(IDirectory)
+@component.adapter(ISparcRepozeCatalog, IDirectoryFieldIndexMap)
 class SparcDirectory(object):
-    implements(IDirectory)
-    adapts(ISparcRepozeCatalog, IDirectoryFieldIndexMap)
     
     def __init__(self, catalog, fields):
         self.catalog = catalog
@@ -23,9 +23,7 @@ class SparcDirectory(object):
     #IDirectory
     def __setitem__(self, key, value):
         """Update IIdentified in directory.  key is IIdentified.id"""
-        if not IIdentified.providedBy(value):
-            raise ValueError("expected value to provide IIdentified")
-        if key != value.getId():
+        if key != IIdentified(value).getId():
             raise KeyError("expected key to match value.getId()")
         
         doc_id = self._doc_map.docid_for_address(key)
@@ -38,9 +36,7 @@ class SparcDirectory(object):
 
     def add(self, value):
         """Add IIdentified in directory, silently replaces any conflict."""
-        if not IIdentified.providedBy(value):
-            raise ValueError("expected value to provide IIdentified")
-        self[value.getId()] = value
+        self[IIdentified(value).getId()] = value
 
     def update(self, value, fields=()):
         """Update IIdentified in directory.  If fields, then only these fields 
@@ -62,9 +58,8 @@ class SparcDirectory(object):
 
     def remove(self, value):
         """Remove IIdentified from directory.  KeyError raised if IIdentified not in directory"""
-        if not IIdentified.providedBy(value):
-            raise ValueError("expected value to provide IIdentified")
-        del self[value.getId()]
+        del self[IIdentified(value).getId()]
+    
     def discard(self, value):
         """Remove IIdentified from directory if present."""
         try:
@@ -81,14 +76,13 @@ class SparcDirectory(object):
         return key in self._map
     def contains(self, value):
         """True if IIdentified is in directory"""
-        if not IIdentified.providedBy(value):
-            raise ValueError("expected value to provide IIdentified")
-        return value.getId() in self._map
+        return IIdentified(value).getId() in self._map
         
     def __iter__(self):
         """Generator of all readable & available keys (IIdentified.id) in directory"""
         for key in self._map:
             yield key
+    
     def values(self, interfaces=None):
         """Generator of all readable & available IIdentified objects in directory
         
@@ -104,9 +98,11 @@ class SparcDirectory(object):
             results = self._catalog.query(query)
             for doc_id in results[1]:
                 yield self._map[self._doc_map.address_for_docid(doc_id)]
+    
     def fields(self):
         """Return list of field names that are indexed and searchable"""
         return [f for f in self._fields.map if f != 'interfaces']
+    
     def search(self, term, fields=None, interfaces=None):
         """Search the directory
         

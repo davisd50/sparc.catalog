@@ -1,7 +1,19 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.0.1'
+version = '1.0.1'
+
+tests_require = [
+    'sparc.testing',
+    'sparc.entity'
+]
+repoze_require = [
+    'zope.security',
+    'repoze.catalog',
+    'persistent',
+    'transaction',
+    'BTrees'
+]
 
 setup(name='sparc.catalog',
       version=version,
@@ -17,6 +29,7 @@ setup(name='sparc.catalog',
         'Natural Language :: English',
         "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3'
       ],
       keywords=['zca'],
       author='David Davis',
@@ -33,17 +46,15 @@ setup(name='sparc.catalog',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'persistent',
-          'transaction',
           'zope.interface',
           'zope.component',
-          'sparc.entity',
-          'repoze.catalog'
+          'zope.schema',
           # -*- Extra requirements: -*-
       ],
-      tests_require=[
-          'sparc.testing'
-      ],
+      extras_require={
+            'testing': tests_require,
+            'repoze': repoze_require
+      },
       entry_points="""
       # -*- Entry points: -*-
       """,

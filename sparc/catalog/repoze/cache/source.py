@@ -1,4 +1,9 @@
-from sparc.cache import ICachableItem
+try:
+    from sparc.cache import ICachableItem
+except ImportError:
+    from zope import interface
+    class ICachableItem(interface.Interface):
+        pass
 
 class CachableSourceForDirectoryMixin(object):
     #implements(ICachableSource)

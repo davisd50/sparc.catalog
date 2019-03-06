@@ -90,7 +90,8 @@ Update...for repoze based catalogs, this is the same as add()
 Items being added into the catalog must provide IIdentified
 >>> try:
 ...     directory.add('string_object')
-... except ValueError:
+...     assert(False)
+... except TypeError:
 ...     pass
 
 We can now search the directory.

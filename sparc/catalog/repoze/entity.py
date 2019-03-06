@@ -4,11 +4,17 @@ from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.interfaces import ICatalog
 from zope.component import createObject
 from zope.component.factory import Factory
-from zope.interface import implementer
+from zope import interface
 from zope.interface import providedBy
 from zope.interface.exceptions import DoesNotImplement
-from sparc.entity import IEntity
+
 from interfaces import IDocumentMap
+
+try:
+    from sparc.entity import IEntity
+except ImportError:
+    class IEntity(interface.Interface):
+        pass
 
 
 class KeywordIndexRelatedEntities(object):
@@ -42,7 +48,7 @@ class KeywordIndexRelatedEntities(object):
                         pass
         return entities
 
-@implementer(ICatalog)
+@interface.implementer(ICatalog)
 def entity_catalog_factory_helper(doc_map=None):
     if doc_map and not IDocumentMap.providedBy(doc_map):
         raise DoesNotImplement(IDocumentMap)
